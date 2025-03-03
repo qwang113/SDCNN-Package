@@ -1,0 +1,10 @@
+Package: SDCNN
+Type: Package
+Title: Spatial Deep Convolutional Neural Networks
+Version: 0.0.1.0
+Imports:
+    keras,
+    sp,
+    FRK,
+    magrittr
+RoxygenNote: 7.3.2
