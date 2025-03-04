@@ -14,7 +14,18 @@
 #' @param loss_fun Loss function for training (default: "mse"). For more options refer to keras::compile().
 #' @param epoch Number of training epochs.
 #' @param bat_size Batch size.
-#' @return A trained SDCNN model.
+#' @return A list containing:
+#' \describe{
+#'   \item{model}{A trained SDCNN model (Keras model object).}
+#'   \item{min_max_scale_min}{The minimum values used for min-max scaling.}
+#'   \item{min_max_scale_range}{The range of values used for min-max scaling.}
+#'   \item{shape_1}{A length 2 vector, represents the dimensions of the basis funcitons on the first resolution.}
+#'   \item{shape_2}{A length 2 vector, represents the dimensions of the basis funcitons on the second resolution.}
+#'   \item{shape_3}{A length 2 vector, represents the dimensions of the basis funcitons on the third resolution.}
+#'   \item{fun_res1}{A list of the first resolution of spatial basis functions used in training.}
+#'   \item{fun_res2}{A list of the second resolution of spatial basis functions used in training.}
+#'   \item{fun_res3}{A list of the third resolution of spatial basis functions used in training.}
+#' }
 #' @examples
 #' \dontrun{
 #' eh_dat <- SDCNN::eh_dat

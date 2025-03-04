@@ -8,7 +8,7 @@
 #' @param y A numeric vector (n x 1) of response values.
 #' @param venv The name of the Conda virtual environment to use.
 #' @param num_pred SDCNN has uncertainty quantification. This arguments specifies the number of predictions to generate. 
-#' @return A matrix of predictions, each column is one prediction, and each row stands for a location.
+#' @return A matrix of predictions, each column is one prediction for all locations, and each row stands for predictions for a location.
 #' @examples
 #' \dontrun{
 #' eh_dat <- SDCNN::eh_dat

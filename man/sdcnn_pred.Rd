@@ -20,7 +20,7 @@ sdcnn_pred(model, coords, X = NULL, y, venv, num_pred)
 \item{num_pred}{SDCNN has uncertainty quantification. This arguments specifies the number of predictions to generate.}
 }
 \value{
-A matrix of predictions, each column is one prediction, and each row stands for a location.
+A matrix of predictions, each column is one prediction for all locations, and each row stands for predictions for a location.
 }
 \description{
 This function applies a trained SDCNN model to predict the response variable at unobserved locations.
