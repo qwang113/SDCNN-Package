@@ -11,7 +11,7 @@
 #' @return A matrix of predictions, each column is one prediction, and each row stands for a location.
 #' @examples
 #' \dontrun{
-#' load("data/eh.Rdata")
+#' eh_dat <- SDCNN::eh_dat
 #' basis_kernel = "Gaussian"
 #' venv = "tf_gpu"
 #' coords <- eh_dat[,1:2]
