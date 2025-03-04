@@ -1,11 +1,21 @@
 Package: SDCNN
-Type: Package
-Title: Spatial Deep Convolutional Neural Networks
-Version: 0.0.1.0
-Encoding: UTF-8
+Title: Spatio-Deep Convolutional Neural Networks for Spatial Prediction
+Version: 0.1.0
+Authors@R: person("Your Name", "Last", email = "your.email@example.com", role = c("aut", "cre"))
+Description: This package implements Spatio-Deep Convolutional Neural Networks (SDCNN) for spatial prediction using deep learning.
+Depends:
+    R (>= 4.0.0)
 Imports:
-    keras,
+    magrittr,
+    ggplot2,
     sp,
     FRK,
-    magrittr
+    keras,
+    tensorflow,
+    here
+Suggests:
+    testthat
+Encoding: UTF-8
+License: GPL-3
+LazyData: true
 RoxygenNote: 7.3.2

@@ -1,28 +1,40 @@
-min_max_scale <- function(x)
-{
-  low <- range(x)[1]
-  high <- range(x)[2]
-  out <- (x - low)/(high - low)
-  return(out)
-}
-
+#' Train a Spatial Deep Convolutional Neural Network (SDCNN) proposed by Qi Wang, Paul A. Parker, and Robert Lund. "Spatial deep convolutional neural networks." Spatial Statistics (2025): 100883.
+#'
+#' This function trains an SDCNN model for spatial prediction.
+#'
+#' @param coords A matrix (n x 2) where the first column is longitude and the second column is latitude, and n is the number of observations.
+#' @param X A matrix (n x p) of covariates, or NULL. Note that longitude and latitude has been included by default. This matrix stands for other covariates.
+#' @param y A numeric vector (n x 1) of response values.
+#' @param venv The name of the Conda virtual environment to use. Note only specific combination of packages is working, for the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml
+#' @param basis_kernel The kernel type for basis function construction (default is "Gaussian"). Possible choices are discussed in the FRK::auto_basis() function.
+#' @param pred_drop Dropout rate for prediction layers.
+#' @param train_prop The proportion of data used for training (default 0.9). The rest are used to apply early stopping
+#' @param model_saving_path Path for saving the model (default: current directory).
+#' @param optimizer Optimization method (default: "adam"). For more options refer to keras::compile().
+#' @param loss_fun Loss function for training (default: "mse"). For more options refer to keras::compile().
+#' @param epoch Number of training epochs.
+#' @param bat_size Batch size.
+#' @return A trained SDCNN model.
+#' @examples
+#' \dontrun{
+#' load("data/eh.Rdata")
+#' basis_kernel = "Gaussian"
+#' venv = "tf_gpu"
+#' coords <- eh_dat[,1:2]
+#' y <- eh_dat[,3]
+#' pred_drop <- 0.1
+#' train_prop <- 0.9
+#' model_saving_path <- here::here()
+#' X <- NULL
+#' optimizer = "adam"
+#' loss_fun = "mse"
+#' epoch = 1000
+#' bat_size = 1000
+#' model <- sdcnn_train(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
+#' }
+#' @export
 sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
-                  model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000){
-  
-  # Coords: n by 2 matrix, first column is the longitude, second column is the latitude
-  # X: n by p matrix, covariates
-  # y: n by 1 vector, response
-  # venv: virtual environment
-  # basis_kernel: Kernel of the basis function
-  # pred_drop: drop out layer rate
-  # train_prop: The percentage of the data used to train the model, the rest are use to validate the model. 
-  #             Note that the validation data are used to determin when to stop training, i.e., early stopping.
-  # model_saving_path: Since early stopping is used, this path is used to save the best model parameters.
-  # optimizer: Gradient based approaches for optimizing the neural networks
-  # loss_fun: Loss function of the neural networks
-  # epoch: number of epochs
-  # bat_size: batch size
-  
+                        model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000) {
   # Specify a Conda environment
   keras::use_condaenv(venv)
   
@@ -49,27 +61,27 @@ sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pr
   
   print("Calculating basis functions ...")
   basis_arr_1 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[1:nbasis_1], function(f) f(sp::coordinates(dat)))),
-                             dim = c(nrow_res1, ncol_res1, nrow(dat))), c(3,2,1)),
-                              c(nrow(dat), nrow_res1, ncol_res1,1)  )
+                                                    dim = c(nrow_res1, ncol_res1, nrow(dat))), c(3,2,1)),
+                                        c(nrow(dat), nrow_res1, ncol_res1,1)  )
   
   
   basis_arr_2 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[(nbasis_1+1):(nbasis_1+nbasis_2)], function(f) f(sp::coordinates(dat)))),
-                             dim = c(nrow_res2, ncol_res2, nrow(dat))), c(3,2,1)),
-                             c(nrow(dat), nrow_res2, ncol_res2, 1)  )
+                                                    dim = c(nrow_res2, ncol_res2, nrow(dat))), c(3,2,1)),
+                                        c(nrow(dat), nrow_res2, ncol_res2, 1)  )
   
   basis_arr_3 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[(nbasis_1+nbasis_2+1):(nbasis_1+nbasis_2+nbasis_3)], function(f) f(sp::coordinates(dat)))),
-                             dim = c(nrow_res3, ncol_res3, nrow(dat))), c(3,2,1)),
-                             c(nrow(dat), nrow_res3, ncol_res3, 1) )
-    
+                                                    dim = c(nrow_res3, ncol_res3, nrow(dat))), c(3,2,1)),
+                                        c(nrow(dat), nrow_res3, ncol_res3, 1) )
+  
   pred_drop_layer <- keras::layer_dropout(rate=pred_drop)
   
   tr_idx <- sample(1:nrow(dat), floor(train_prop*nrow(dat)))
   
-    if (!is.null(X)) {
-      covars_raw <- cbind(coords, X)  # Combine when X is not NULL
-    } else {
-      covars_raw <- coords  # Keep only coords if X is NULL
-    }
+  if (!is.null(X)) {
+    covars_raw <- cbind(coords, X)  # Combine when X is not NULL
+  } else {
+    covars_raw <- coords  # Keep only coords if X is NULL
+  }
   covars <- apply(covars_raw, 2, min_max_scale)
   cov_tr <- as.matrix(covars)[tr_idx,]
   cov_va <- as.matrix(covars)[-tr_idx,]
@@ -171,75 +183,3 @@ sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pr
               "fun_res1" = gridbasis@fn[1:nbasis_1], "fun_res2" = gridbasis@fn[(nbasis_1+1):(nbasis_1+nbasis_2)],
               "fun_res3" = gridbasis@fn[(nbasis_1+nbasis_2+1):(nbasis_1+nbasis_2+nbasis_3)]))
 }
-
-
-
-
-sdcnn_pred <- function(model, coords, X = NULL, y, venv, num_pred){
-  predictions <- matrix(NA, nrow = nrow(coords), ncol = num_pred)
-  keras::use_condaenv(venv)
-  
-  # Reshape the data
-  dat <- data.frame(long = coords[,1], lat = coords[,2], y = y)
-  sp::coordinates(dat) <- ~ long + lat
-  
-  # Generate basis functions
-
-  nrow_res1 <- model$shape_1[1]
-  ncol_res1 <- model$shape_1[2]
-  nrow_res2 <- model$shape_2[1]
-  ncol_res2 <- model$shape_2[2]
-  nrow_res3 <- model$shape_3[1]
-  ncol_res3 <- model$shape_3[2]
-  
-  print("Calculating basis functions ...")
-  basis_arr_1 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res1, function(f) f(sp::coordinates(dat)))),
-                                             dim = c(nrow_res1, ncol_res1, nrow(dat))), c(3,2,1)),
-                                 c(nrow(dat), nrow_res1, ncol_res1,1)  )
-  
-  basis_arr_2 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res2, function(f) f(sp::coordinates(dat)))),
-                                             dim = c(nrow_res2, ncol_res2, nrow(dat))), c(3,2,1)),
-                                 c(nrow(dat), nrow_res2, ncol_res2, 1)  )
-  
-  basis_arr_3 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res3, function(f) f(sp::coordinates(dat)))),
-                                             dim = c(nrow_res3, ncol_res3, nrow(dat))), c(3,2,1)),
-                                 c(nrow(dat), nrow_res3, ncol_res3, 1) )
-  if (!is.null(X)) {
-    covars <- cbind(coords, X)  # Combine when X is not NULL
-  } else {
-    covars <- coords  # Keep only coords if X is NULL
-  }
-  covars <- sweep(covars, 2, model$min.max.scale_min, FUN = "-")
-  covars <- sweep(covars, 2, model$min.max.scale_range, FUN = "/")
-  
-  
-  for (j in 1:num_pred) {
-    print(j)
-    predictions[,j] <- predict(model$model, list(
-      basis_arr_1, basis_arr_2, basis_arr_3, as.matrix(covars)))
-  }
-  
-  return(predictions)
-}
-
-
-# For testing purposes.
-# load("data/eh.Rdata")
-# basis_kernel = "Gaussian"
-# venv = "tf_gpu"
-# coords <- eh_dat[,1:2]
-# y <- eh_dat[,3]
-# pred_drop <- 0.1
-# train_prop <- 0.9
-# model_saving_path <- here::here()
-# X <- NULL
-# optimizer = "adam"
-# loss_fun = "mse"
-# epoch = 1000
-# bat_size = 1000
-# model <- sdcnn_train(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
-#             model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
-# 
-# preds <- sdcnn_pred(model, coords, X = NULL, y, venv, num_pred = 5)
-
-
