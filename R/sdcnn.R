@@ -8,22 +8,8 @@ min_max_scale <- function(x)
   return(out)
 }
 
-load("data/eh.Rdata")
-basis_kernel = "Gaussian"
-venv = "tf_gpu"
-coords <- eh_dat[,1:2]
-y <- eh_dat[,3]
-pred_drop <- 0.1
-train_prop <- 0.9
-model_saving_path <- "D:/77/research/temp/best_weights.h5"
-X <- NULL
-optimizer = "adam"
-loss_fun = "mse"
-epoch = 1000
-bat_size = 1000
-
 sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
-                  model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 1000, bat_size = 1000){
+                  model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000){
   
   # Coords: n by 2 matrix, first column is the longitude, second column is the latitude
   # X: n by p matrix, covariates
@@ -183,7 +169,9 @@ sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pr
     callbacks = model_checkpoint, shuffle = TRUE
   )
   return(list("model" = model_sdcnn, "min.max.scale_min" = apply(covars_raw, 2, min), "min.max.scale_range" = diff(apply(covars_raw,2, range)),
-              "shape_1" = c(nrow_res1, ncol_res1), "shape_2" = c(nrow_res2, nrow_res2), "shape_3" = c(nrow_res3, nrow_res3) ))
+              "shape_1" = c(nrow_res1, ncol_res1), "shape_2" = c(nrow_res2, nrow_res2), "shape_3" = c(nrow_res3, nrow_res3),
+              "fun_res1" = gridbasis@fn[1:nbasis_1], "fun_res2" = gridbasis@fn[(nbasis_1+1):(nbasis_1+nbasis_2)],
+              "fun_res3" = gridbasis@fn[(nbasis_1+nbasis_2+1):(nbasis_1+nbasis_2+nbasis_3)]))
 }
 
 
@@ -198,32 +186,24 @@ sdcnn_pred <- function(model, coords, X = NULL, y, venv, num_pred){
   sp::coordinates(dat) <- ~ long + lat
   
   # Generate basis functions
-  gridbasis <- FRK::auto_basis(mainfold =  FRK::plane(), data = dat, nres = 3, type = basis_kernel, regular = 1)
-  res_1 <- gridbasis@df[which(gridbasis@df$res==1),]
-  nbasis_1 <- nrow(res_1)
-  nrow_res1 <- length(unique(res_1$loc2))
-  ncol_res1 <- length(unique(res_1$loc1))
-  
-  res_2 <- gridbasis@df[which(gridbasis@df$res==2),]
-  nbasis_2 <- nrow(res_2)
-  nrow_res2 <- length(unique(res_2$loc2))
-  ncol_res2 <- length(unique(res_2$loc1))
-  
-  res_3 <- gridbasis@df[which(gridbasis@df$res==3),]
-  nbasis_3 <- nrow(res_3)
-  nrow_res3 <- length(unique(res_3$loc2))
-  ncol_res3 <- length(unique(res_3$loc1))
+
+  nrow_res1 <- model$shape_1[1]
+  ncol_res1 <- model$shape_1[2]
+  nrow_res2 <- model$shape_2[1]
+  ncol_res2 <- model$shape_2[2]
+  nrow_res3 <- model$shape_3[1]
+  ncol_res3 <- model$shape_3[2]
   
   print("Calculating basis functions ...")
-  basis_arr_1 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[1:nbasis_1], function(f) f(sp::coordinates(dat)))),
+  basis_arr_1 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res1, function(f) f(sp::coordinates(dat)))),
                                              dim = c(nrow_res1, ncol_res1, nrow(dat))), c(3,2,1)),
                                  c(nrow(dat), nrow_res1, ncol_res1,1)  )
   
-  basis_arr_2 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[(nbasis_1+1):(nbasis_1+nbasis_2)], function(f) f(sp::coordinates(dat)))),
+  basis_arr_2 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res2, function(f) f(sp::coordinates(dat)))),
                                              dim = c(nrow_res2, ncol_res2, nrow(dat))), c(3,2,1)),
                                  c(nrow(dat), nrow_res2, ncol_res2, 1)  )
   
-  basis_arr_3 <- keras::array_reshape(  aperm(array(t(sapply( gridbasis@fn[(nbasis_1+nbasis_2+1):(nbasis_1+nbasis_2+nbasis_3)], function(f) f(sp::coordinates(dat)))),
+  basis_arr_3 <- keras::array_reshape(  aperm(array(t(sapply( model$fun_res3, function(f) f(sp::coordinates(dat)))),
                                              dim = c(nrow_res3, ncol_res3, nrow(dat))), c(3,2,1)),
                                  c(nrow(dat), nrow_res3, ncol_res3, 1) )
   if (!is.null(X)) {
@@ -244,5 +224,24 @@ sdcnn_pred <- function(model, coords, X = NULL, y, venv, num_pred){
   return(predictions)
 }
 
+
+# For testing purposes.
+# load("data/eh.Rdata")
+# basis_kernel = "Gaussian"
+# venv = "tf_gpu"
+# coords <- eh_dat[,1:2]
+# y <- eh_dat[,3]
+# pred_drop <- 0.1
+# train_prop <- 0.9
+# model_saving_path <- "D:/77/research/temp/best_weights.h5"
+# X <- NULL
+# optimizer = "adam"
+# loss_fun = "mse"
+# epoch = 1000
+# bat_size = 1000
+# model <- sdcnn_train(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
+#             model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
+# 
+# preds <- sdcnn_pred(model, coords, X = NULL, y, venv, num_pred = 5)
 
 
