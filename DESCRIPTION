@@ -2,7 +2,8 @@ Package: SDCNN
 Title: Spatio-Deep Convolutional Neural Networks for Spatial Prediction
 Version: 0.1.0
 Authors@R: person("Qi", "Wang", email = "qwang113@ucsc.edu", role = c("aut", "cre"))
-Description: This package implements Spatio-Deep Convolutional Neural Networks (SDCNN) for spatial prediction using deep learning.
+Description: This package implements Spatio-Deep Convolutional Neural Networks (SDCNN) for spatial prediction using deep learning. It includes the functions to train the model and make predictions. Three datasets used in the paper are also attached. Note that the environment yaml file is available on: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml.
+
 Depends:
     R (>= 4.0.0)
 Imports:
