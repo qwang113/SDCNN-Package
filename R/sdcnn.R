@@ -233,7 +233,7 @@ sdcnn_pred <- function(model, coords, X = NULL, y, venv, num_pred){
 # y <- eh_dat[,3]
 # pred_drop <- 0.1
 # train_prop <- 0.9
-# model_saving_path <- "D:/77/research/temp/best_weights.h5"
+# model_saving_path <- here::here()
 # X <- NULL
 # optimizer = "adam"
 # loss_fun = "mse"
