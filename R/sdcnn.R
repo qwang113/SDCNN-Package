@@ -1,5 +1,3 @@
-#' @importFrom magrittr %>%
-
 min_max_scale <- function(x)
 {
   low <- range(x)[1]

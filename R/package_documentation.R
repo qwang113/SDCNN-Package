@@ -4,7 +4,7 @@
 #'
 #' @docType package
 #' @name SDCNN
-
+NULL
 
 #' Min-max Scaling
 #'
