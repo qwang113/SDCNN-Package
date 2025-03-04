@@ -2,6 +2,7 @@ Package: SDCNN
 Type: Package
 Title: Spatial Deep Convolutional Neural Networks
 Version: 0.0.1.0
+Encoding: UTF-8
 Imports:
     keras,
     sp,
