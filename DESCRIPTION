@@ -6,12 +6,9 @@ Description: This package implements Spatio-Deep Convolutional Neural Networks (
 Depends:
     R (>= 4.0.0)
 Imports:
-    magrittr,
-    ggplot2,
     sp,
     FRK,
     keras,
-    tensorflow,
     here
 Suggests:
     testthat

@@ -24,7 +24,8 @@
 #' loss_fun = "mse"
 #' epoch = 1000
 #' bat_size = 1000
-#' model <- sdcnn_train(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
+#' model <- sdcnn_train(coords, X = NULL, y, venv, basis_kernel = "Gaussian",
+#'  pred_drop = 0.1, train_prop = 0.9,model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
 #' preds <- sdcnn_pred(model, coords, X = NULL, y, venv, num_pred = 5)
 #' }
 #' @export
