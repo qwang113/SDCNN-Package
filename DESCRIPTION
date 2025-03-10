@@ -9,7 +9,9 @@ Imports:
     sp,
     FRK,
     keras,
-    here
+    here,
+    reticulate,
+    httr
 Suggests:
     testthat
 Encoding: UTF-8

@@ -5,7 +5,7 @@
 #' @param coords A matrix (n x 2) where the first column is longitude and the second column is latitude, and n is the number of observations.
 #' @param X A matrix (n x p) of covariates, or NULL. Note that longitude and latitude has been included by default. This matrix stands for other covariates.
 #' @param y A numeric vector (n x 1) of response values.
-#' @param venv The name of the Conda virtual environment to use. Note only specific combination of packages is working, for the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml
+#' @param venv The name of the Conda virtual environment to use. It is set to be NULL by default. In this case, it will create a new environment called tf_gpu. Note only specific combination of packages is working, for the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml
 #' @param basis_kernel The kernel type for basis function construction (default is "Gaussian"). Possible choices are discussed in the FRK::auto_basis() function.
 #' @param pred_drop Dropout rate for prediction layers.
 #' @param train_prop The proportion of data used for training (default 0.9). The rest are used to apply early stopping
@@ -45,8 +45,25 @@
 #'  model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
 #' }
 #' @export
-sdcnn_train <- function(coords, X = NULL, y, venv, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
+sdcnn_train <- function(coords, X = NULL, y, venv=NULL, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
                         model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000) {
+  existing_envs <- reticulate::conda_list()$name
+  if(!(venv %in% existing_envs)){
+    message("No active Python environment found. Setting up an environment...")
+    yaml_url <- "https://raw.githubusercontent.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/main/tf_gpu.yaml"
+    yaml_path <- tempfile(fileext = ".yaml")  # Create a temporary file
+    httr::GET(yaml_url, write_disk(yaml_path, overwrite = TRUE))
+    if(is.null(venv)){
+      message("No specified name for environment, set to be tf_gpu ...")
+      env_name <- "tf_gpu"
+    }else{
+      env_name <- venv
+    }
+    reticulate::conda_create(env_name, yaml = yaml_path)
+    message("Environment created.")
+    unlink(temp_file)
+  }
+  
   # Specify a Conda environment
   keras::use_condaenv(venv)
   
