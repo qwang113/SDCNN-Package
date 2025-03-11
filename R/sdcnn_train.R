@@ -5,7 +5,7 @@
 #' @param coords A matrix (n x 2) where the first column is longitude and the second column is latitude, and n is the number of observations.
 #' @param X A matrix (n x p) of covariates, or NULL. Note that longitude and latitude has been included by default. This matrix stands for other covariates.
 #' @param y A numeric vector (n x 1) of response values.
-#' @param venv The name of the Conda virtual environment to use. It is set to be NULL by default. In this case, it will create a new environment called tf_gpu. Note only specific combination of packages is working, for the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml
+#' @param venv The name of the Conda virtual environment to use. It is set to be NULL by default. In this case, it will create a new environment called tf_gpu. For the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml
 #' @param basis_kernel The kernel type for basis function construction (default is "Gaussian"). Possible choices are discussed in the FRK::auto_basis() function.
 #' @param pred_drop Dropout rate for prediction layers.
 #' @param train_prop The proportion of data used for training (default 0.9). The rest are used to apply early stopping
@@ -45,27 +45,78 @@
 #'  model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000)
 #' }
 #' @export
-sdcnn_train <- function(coords, X = NULL, y, venv=NULL, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
+sdcnn_train <- function(coords, X = NULL, y, venv = NULL, basis_kernel = "Gaussian", pred_drop = 0.1, train_prop = 0.9,
                         model_saving_path = here::here(), optimizer = "adam", loss_fun = "mse", epoch = 10, bat_size = 1000) {
+  
   existing_envs <- reticulate::conda_list()$name
-  if(!(venv %in% existing_envs)){
-    message("No active Python environment found. Setting up an environment...")
-    yaml_url <- "https://raw.githubusercontent.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/main/tf_gpu.yaml"
-    yaml_path <- tempfile(fileext = ".yaml")  # Create a temporary file
-    httr::GET(yaml_url, write_disk(yaml_path, overwrite = TRUE))
-    if(is.null(venv)){
-      message("No specified name for environment, set to be tf_gpu ...")
-      env_name <- "tf_gpu"
-    }else{
-      env_name <- venv
-    }
-    reticulate::conda_create(env_name, yaml = yaml_path)
-    message("Environment created.")
-    unlink(temp_file)
+  if(is.null(venv)){
+    message("No specified name for environment, set to be tf_gpu ...")
+    env_name <- "tf_gpu"
+  }else{
+    env_name <- venv
   }
   
+  if(!(env_name %in% existing_envs)){
+    message("No active Python environment found. Setting up an environment...")
+    reticulate::conda_create(env_name, packages = "python=3.8")
+    reticulate::conda_install(env_name, c(
+      "ca-certificates=2023.7.22",
+      "cudatoolkit=11.0.3",
+      "cudnn=8.0.5.39",
+      "openssl=1.1.1q",
+      "pip=23.3",
+      "setuptools=68.0.0",
+      "sqlite=3.41.2",
+      "vc=14.2",
+      "vs2015_runtime=14.27.29016",
+      "wheel=0.41.2"
+    ), channel = "conda-forge")
+
+    reticulate::py_install(c(
+      "absl-py==0.15.0",
+      "astunparse==1.6.3",
+      "cachetools==5.3.2",
+      "certifi==2023.7.22",
+      "charset-normalizer==3.3.1",
+      "flatbuffers==1.12",
+      "gast==0.3.3",
+      "google-auth==2.23.3",
+      "google-auth-oauthlib==0.4.6",
+      "google-pasta==0.2.0",
+      "grpcio==1.32.0",
+      "h5py==2.10.0",
+      "idna==3.4",
+      "importlib-metadata==6.8.0",
+      "keras-preprocessing==1.1.2",
+      "markdown==3.5",
+      "markupsafe==2.1.3",
+      "numpy==1.19.5",
+      "oauthlib==3.2.2",
+      "opt-einsum==3.3.0",
+      "protobuf==3.20.3",
+      "pyasn1==0.5.0",
+      "pyasn1-modules==0.3.0",
+      "requests==2.31.0",
+      "requests-oauthlib==1.3.1",
+      "rsa==4.9",
+      "six==1.15.0",
+      "tensorboard==2.11.2",
+      "tensorboard-data-server==0.6.1",
+      "tensorboard-plugin-wit==1.8.1",
+      "tensorflow-estimator==2.4.0",
+      "termcolor==1.1.0",
+      "typing-extensions==3.7.4.3",
+      "urllib3==2.0.7",
+      "werkzeug==3.0.1",
+      "wrapt==1.12.1",
+      "zipp==3.17.0",
+      "tensorflow-gpu==2.4.1"
+    ), envname = env_name, method = "auto")
+    message("Environment created.")
+  }
+
   # Specify a Conda environment
-  keras::use_condaenv(venv)
+  keras::use_condaenv(env_name)
   
   # Reshape the data
   dat <- data.frame(long = coords[,1], lat = coords[,2], y = y)
