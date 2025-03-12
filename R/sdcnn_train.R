@@ -1,7 +1,7 @@
 #' Train a Spatial Deep Convolutional Neural Network (SDCNN) proposed by Qi Wang, Paul A. Parker, and Robert Lund. "Spatial deep convolutional neural networks." Spatial Statistics (2025): 100883.
 #'
 #' This function trains an SDCNN model for spatial prediction.
-#'
+#' @importFrom magrittr %>%
 #' @param coords A matrix (n x 2) where the first column is longitude and the second column is latitude, and n is the number of observations.
 #' @param X A matrix (n x p) of covariates, or NULL. Note that longitude and latitude has been included by default. This matrix stands for other covariates.
 #' @param y A numeric vector (n x 1) of response values.
@@ -72,7 +72,7 @@ sdcnn_train <- function(coords, X = NULL, y, venv = NULL, basis_kernel = "Gaussi
       "wheel=0.41.2"
     ), channel = "conda-forge")
 
-    reticulate::py_install(c(
+    reticulate::conda_install(c(
       "absl-py==0.15.0",
       "astunparse==1.6.3",
       "cachetools==5.3.2",
@@ -109,9 +109,10 @@ sdcnn_train <- function(coords, X = NULL, y, venv = NULL, basis_kernel = "Gaussi
       "urllib3==2.0.7",
       "werkzeug==3.0.1",
       "wrapt==1.12.1",
-      "zipp==3.17.0",
-      "tensorflow-gpu==2.4.1"
+      "zipp==3.17.0"
     ), envname = env_name, method = "auto")
+    
+    reticulate::conda_install(env_name, "tensorflow-gpu==2.4.1", pip = TRUE)
     message("Environment created.")
   }
 

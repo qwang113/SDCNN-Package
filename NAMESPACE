@@ -3,3 +3,4 @@
 export(min_max_scale)
 export(sdcnn_pred)
 export(sdcnn_train)
+importFrom(magrittr,"%>%")

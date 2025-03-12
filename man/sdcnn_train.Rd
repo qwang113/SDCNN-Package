@@ -8,7 +8,7 @@ sdcnn_train(
   coords,
   X = NULL,
   y,
-  venv,
+  venv = NULL,
   basis_kernel = "Gaussian",
   pred_drop = 0.1,
   train_prop = 0.9,
@@ -26,7 +26,7 @@ sdcnn_train(
 
 \item{y}{A numeric vector (n x 1) of response values.}
 
-\item{venv}{The name of the Conda virtual environment to use. Note only specific combination of packages is working, for the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml}
+\item{venv}{The name of the Conda virtual environment to use. It is set to be NULL by default. In this case, it will create a new environment called tf_gpu. For the environment that the authors are using, refer to: https://github.com/qwang113/Spatial-Deep-Convolutional-Neural-Networks/blob/main/tf_gpu.yaml}
 
 \item{basis_kernel}{The kernel type for basis function construction (default is "Gaussian"). Possible choices are discussed in the FRK::auto_basis() function.}
 
